@@ -1,0 +1,4 @@
+town --> boss
+målet med spelet är att döda bossen så fort som möjligt
+//
+endless adventure, överleva så många turer som möjligt
