@@ -1,10 +1,20 @@
 import shutil
 import time
 import re
-def drawHP(character,colour="green"):
+def drawHP(character,colour="green",mana=False):
     hp = character.hp
     diff = (character.maxhp-character.hp)
-    print(character.returnName(), colored(ucode("25A0")*hp+ucode("25A1")*diff,colour=colour), hp, "/", hp+diff)
+    filled = ucode("25A0")
+    unfilled = ucode("25A1")
+    name = character.returnName()
+    if(mana):
+        hp = character.mana
+        diff = (character.maxmana-character.mana)
+        filled = ucode("25CF")
+        unfilled = ucode("25CB")
+        name = character.nameLength*" "
+    print(name, colored(filled*hp+unfilled*diff,colour=colour), hp, "/", hp+diff)
+
 def progress():
     input("Press Enter to continue: ")
     pass

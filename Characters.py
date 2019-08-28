@@ -4,6 +4,7 @@ import math
 #Main classes
 class Character:
     def __init__(self):
+        self.nameLength = 0
         self.maxhp = 10
         self.hp = self.maxhp
         self.damage = 4
@@ -16,10 +17,15 @@ class Character:
         self.name = ""
         self.armor = 0
         self.stun = 0
+        self.fire = 0
     def hurt(self, damage):
         self.hp=max(0,self.hp-damage+self.armor)
         if(self.hp==0):
                 self.die()
+    def effects(self):
+        if(self.fire>0):
+            self.messages.append("takes "+str(self.fire)+" fire damage")
+            self.hurt(self.fire)
     def Heal(self):
         heal = self.healing + random.randint(-self.healingVariance, self.healingVariance)
         newhp = min(self.maxhp,self.hp+heal)
@@ -423,4 +429,64 @@ class Paladin(Player):
         else:
             self.messages.append("misses stun")
 class Sorcerer(Player):
-    pass
+    def __init__(self):
+        Player.__init__(self)
+        self.damage=2
+        self.damageVariance=1
+        self.hp = 16
+        self.maxhp = 16
+        self.maxAccuracy = 0.9
+        self.accuracy = self.maxAccuracy
+        self.armor = 0
+       
+        self.magicDamage = 4
+        self.mana = 3
+        self.maxmana = 5
+        self.managrowth = 1
+        self.fireDamage = 1
+        #self.spells = [self.TwinFlame,self.Ignite,self.Bolt,self.Regain]
+        #initialSpell = random.choice(self.spells)
+        #self.spells.remove(initialSpell)
+        #self.unlockedSpells = [initialSpell]
+        
+        self.actions = [self.Heal,self.Attack,self.TwinFlame]
+    def Spell(self):
+        self.messages.append("tries casting spell")
+    
+    def TwinFlame(self):
+        enemies = self.enemies
+        chosenEnemies = []
+        if(len(enemies) == 1 or len(enemies) == 2):
+            chosenEnemies = enemies
+        else:
+            chosenEnemies.append(chooseEnemy(enemies))
+            enemies.remove(chosenEnemies[0])
+            chosenEnemies.append(chooseEnemy(enemies))
+        i=0
+        while(i<len(chosenEnemies)):
+            enemy=chosenEnemies[i]
+            damage = self.magicDamage
+            fire = self.fireDamage
+            if(self.accuracy*0.9 > random.random()):
+                self.messages.append("uses TwinFlame on "+ enemy.returnName() + " for "+str(damage)+"hp and "+str(fire)+" fire")
+                enemy.fire+=fire
+                enemy.hurt(damage)
+
+                if(not enemy in self.enemies):
+                    i-=1
+            else:
+
+
+
+                self.messages.append("misses TwinFlame")
+            i+=1
+
+
+
+
+
+
+
+
+
+
