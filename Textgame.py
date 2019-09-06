@@ -2,7 +2,7 @@ from Drawing import *
 from Characters import *
 from Items import *
 from Map import *
-cheat=0
+
 classes=[Warrior,Paladin,Sorcerer]
 
 def reprint():
@@ -27,7 +27,13 @@ player.nameLength = len(inp)
 print()
 slowPrint("Good Luck "+player.name,speed=3)
 progress()
-#player.enemies=attack(player,[Spirit]*5)
+if(isinstance(player,Sorcerer)):
+    clear()
+    print("Unlocked "+player.unlockedSpells[0][0].__name__)
+progress()
+
+cheat=0
+player.enemies = attack(player,[Mechanum]*3)
 
 while True:
     while cheat>player.level:
@@ -35,10 +41,10 @@ while True:
         unlockEnemy(player,cheat=True)
     while len(player.enemies)>0:
         reprint()
+        player.invinsible=0
         player.action()
-        player.effects()
-        if(isinstance(player,Sorcerer)):
-            player.mana = min(player.maxmana,player.mana+player.managrowth)
+        for enemy in player.enemies:
+            enemy.invinsible=0
         clear()
         player.printMessages()
         i=0
@@ -53,6 +59,8 @@ while True:
                 i-=1
                 player.printMessages()
             i+=1
+        player.effects()
+        player.printMessages()
 
         progress()
     clear()

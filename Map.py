@@ -2,7 +2,7 @@ import random
 from Drawing import *
 from Characters import *
 
-enemyTypes = [Critter,Bat,Orc,Robotum,Roc,Vampire,Spirit,Summoner]
+enemyTypes = [Critter,Bat,Orc,Robotum,Roc,Vampire,Spirit,Summoner,Pyromancer,Mechanum]
 unlockedEnemyTypes=[]
 def generateEnemy(player,type):
     enemy = type()

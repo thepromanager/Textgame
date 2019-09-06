@@ -51,10 +51,14 @@ def ucode(character):
     return chr(int(character,base=16))
     pass
 def choice(actions):
+    if(len(actions)==1):
+        return "0"
     for action in actions:
         actionName=action
         if(callable(action)):
             actionName = action.__name__
+        elif(isinstance(action,tuple)):
+            actionName = action[0].__name__
         elif(not isinstance(action,str)):
             actionName = action.__dict__["name"]          
         print(colored(str(actions.index(action))+":",colour="blue"),actionName)
