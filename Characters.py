@@ -2,6 +2,9 @@ import random
 from Drawing import *
 import math
 #Main classes
+
+
+
 class Character:
     def __init__(self):
         self.invinsible = 0
@@ -9,9 +12,11 @@ class Character:
         self.maxhp = 10
         self.hp = self.maxhp
         self.damage = 4
+        self.damagestandard=4
         self.damageVariance = 2
         self.healing = 2
         self.accuracy = 0.9
+        self.maxaccuracy = 0.9
         self.healingVariance = 2
         self.messages = []
         self.items = []
@@ -20,64 +25,60 @@ class Character:
         self.armorstandard = 0
         self.stun = 0
         self.fire = 0
+        self.fireResistance=0
+        self.magicDamage = 0
+        self.maxmana = 0
+        self.mana = 0
+        self.managrowth = 0
+        self.fireDamage = 0
+    def setStats(self):
+        self.hp=self.maxhp
+        self.armor=self.armorstandard
+        self.mana=self.maxmana
+        self.accuracy=self.maxaccuracy
+        self.damage=self.damagestandard
     def hurt(self, damage):
         if(not self.invinsible):
             self.hp=max(0,self.hp-damage+self.armor)
             if(self.hp==0):
                 self.die()
         else:
-            self.messages.append(" is invinsible")
+            slowPrint(self.name+"  is invinsible")
+    def passive(self):
+        pass
     def effects(self):
-        if(self.fire>0):
-            self.messages.append("takes "+str(self.fire)+" fire damage")
-            self.hurt(self.fire)
+        if(self.fire>self.fireResistance):
+            slowPrint(self.name+" takes "+str(self.fire-self.fireResistance)+" fire damage")
+            self.hurt(self.fire-self.fireResistance)
     def Heal(self):
         heal = self.healing + random.randint(-self.healingVariance, self.healingVariance)
         newhp = min(self.maxhp,self.hp+heal)
-        self.messages.append("healed from {}hp to {}hp".format(self.hp, newhp))
+        slowPrint(self.name+" healed from {}hp to {}hp".format(self.hp, newhp))
         self.hp=newhp
-    
-    def printMessages(self):
-        for message in self.messages:
-            slowPrint(self.name+" "+message,speed=4)
-        self.messages=[]
-        print("")
 class Player(Character):
     def __init__(self):       
         Character.__init__(self)
-        self.hp = 15
-        self.maxhp = 15
+        self.maxhp = 15   
         self.level = 0
         self.name = "player"
         self.actions = [self.Heal,self.Attack]
-        self.enemies = []
-        self.reprint = None
-        self.maxAccuracy = 0.9
-        self.maxmana = 0
-        self.mana = 0
     def returnName(self):
         return self.name
     def hurt(self,damage):
         self.hp=max(0,self.hp-damage+self.armor)
+        if(self.hp==0):
+            self.die()
 
     def die(self):
-        slowPrint("You are dead",speed=0.5)
-        print("name",self.name,"level",self.level)
+        slowPrint("You are dead "+self.name,speed=0.5)
+        for player in Global.players:
+            print("name",player.name,"level",player.level)
         progress()
         exit()
     def action(self):
+        print(self.action) 
         if(self.stun==0):
-            print("Which action do you want to pursue?")
-            didAction = False
-            chosenAction = choice(self.actions)
-            while didAction == False:            
-                if(chosenAction in [str(i) for i in range(0,len(self.actions))]):
-                    didAction = True
-                    self.actions[int(chosenAction)]()
-                else:
-                    self.reprint()
-                    print("Invalid Input")
-                    chosenAction = choice(self.actions)
+            chooseTargets(self.actions,name="action",action="pursue")[0]()
         else:
             self.stun=self.stun-1
             clear()
@@ -85,10 +86,11 @@ class Player(Character):
             progress()
         self.mana=min(self.maxmana,self.mana+1)
     def levelUp(self,cheat=False):
-        self.level = self.level + 1
-        self.armor = self.armorstandard
+        self.setStats()
+        self.level+=1
         if(self.level>1):
             clear()
+            print(self.returnName())
             print("damage:",self.damage)
             print("healing:",self.healing)
             print("maxhp:",self.maxhp)
@@ -119,36 +121,19 @@ class Player(Character):
             clear()
             self.accuracy=self.maxAccuracy
             self.fire = 0
-            #self.hp=self.maxhp
+            self.hp=self.maxhp
+            self.mana=self.maxmana
             if(cheat==False):
                 print("Accuracy restored")
                 progress()
-    def chooseEnemy(self,enemies):
-        self.reprint()
-        choseEnemy = False
-        if(len(enemies)==1):
-            choseEnemy = True
-            chosenEnemy = 0
-        else:
-            print("Which enemy do you want to attack?")
-            chosenEnemy = choice(enemies)
-        while choseEnemy == False:                          
-            if(chosenEnemy in [str(i) for i in range(0,len(enemies))]):
-                choseEnemy = True
-            else:
-                self.reprint()
-                print("Invalid Input")
-                chosenEnemy = choice(enemies)
-        chosenEnemy = enemies[int(chosenEnemy)]
-        return chosenEnemy
     def Attack(self):
-        chosenEnemy = self.chooseEnemy(self.enemies)
+        chosenEnemy = chooseTargets(Global.enemies,name="enemy",action="attack")[0]
         damage = self.damage + random.randint(-self.damageVariance, self.damageVariance)
         if(self.accuracy > random.random()):
-            self.messages.append("attacks "+ chosenEnemy.returnName() + " for "+str(damage)+"hp")
+            slowPrint(self.name+" attacks "+ chosenEnemy.returnName() + " for "+str(damage)+"hp")
             chosenEnemy.hurt(damage)
         else:
-            self.messages.append("misses an attack")
+            slowPrint(self.name+" misses an attack")
 class Enemy(Character):
     def __init__(self):
         Character.__init__(self)
@@ -156,7 +141,7 @@ class Enemy(Character):
         self.typeColor = "red"
         self.name = colored("Enemy",colour="red")
         self.actions = [self.Heal,self.Attack]
-        self.player = ""
+        self.art = ["??"]*5
     def printMessages(self):
         for message in self.messages:
             if(self.type=="Critter"):
@@ -174,18 +159,21 @@ class Enemy(Character):
                 v = random.randint(0,len(self.actions)-1)
             self.actions[v]()
         else:
-            self.messages.append("is stunned")
+            slowPrint(self.name+" is stunned")
             self.stun=self.stun-1
     def Attack(self):
         damage = self.damage + random.randint(-self.damageVariance, self.damageVariance)
         if(self.accuracy > random.random()):
-            self.messages.append("attacks "+ self.player.name + " for "+str(damage)+"hp")
-            self.player.hurt(damage)
+            player = random.choice(Global.players)
+
+            slowPrint(self.name+" attacks "+ player.name + " for "+str(damage)+"hp")
+            player.hurt(damage)
         else:
-            self.messages.append("misses an attack")
+            slowPrint(self.name+" misses an attack")
     def die(self):
-        self.player.messages.append("kills "+self.returnName())
-        self.player.enemies.remove(self)
+        slowPrint(self.name+" dies")
+        self.printMessages()
+        Global.enemies.remove(self)
     def description(self):
         slowPrint("Generic Monster found nowhere")
     def gname(self,name):
@@ -210,6 +198,7 @@ class Critter(Enemy):
         self.damageVariance=1
         self.accuracy=0.8
         self.actions=[self.Heal,self.Heal,self.Attack]
+        self.art = [" "*5]*4+["(⸪)< "]
     
     def genName(self):
         nam1=["Meini","Mouni","Bilou","Borel","Binkel"]
@@ -227,6 +216,8 @@ class Orc(Enemy):
         self.damageVariance=2
         self.accuracy=0.7
         self.actions=[self.Heal,self.Attack,self.Attack,self.Attack]
+        self.art = [" "*7]*2+[r"(\) O  ",r"  \/|\ ",r"   / \ "]
+
     
     def genName(self):
         nam1=["Brag","Krau","Brak","Vra","Sig","Daug","Dig","Big","Jag"]
@@ -244,17 +235,19 @@ class Bat(Enemy):
         self.damageVariance=0
         self.accuracy=0.7
         self.actions=[self.Heal,self.Attack,self.FlyAttack]
+        self.art = [" "*10]*2+[" ,  _  ,  ",r"/|\(⸪)/|\ ","   ^ ^    "]
     def FlyAttack(self):
         if(self.accuracy > random.random()):
             damage = self.damage + random.randint(-self.damageVariance, self.damageVariance) + 2
-            self.messages.append("uses flying attack on "+self.player.name+" for "+str(damage)+"hp")
-            self.messages.append("and "+self.player.name+" loses accuracy")
+            player = random.choice(Global.players)
+            slowPrint(self.name+" uses flying attack on "+player.name+" for "+str(damage)+"hp")
+            slowPrint(self.name+" and "+player.name+" loses accuracy")
             self.accuracy = self.accuracy * 0.7
-            self.player.accuracy = self.player.accuracy*0.8
+            player.accuracy = max(0.5,player.accuracy*0.8)
     
-            self.player.hurt(damage)
+            player.hurt(damage)
         else:
-            self.messages.append("misses flying attack")
+            slowPrint(self.name+" misses flying attack")
     def genName(self):
         nam1=["Wing","Fly","Sky","Night"]
         nam2=["ling","gail","ster"]
@@ -273,19 +266,17 @@ class Robotum(Enemy):
         self.accuracy=1
         self.actions=[self.Heal,self.Attack,self.Laser]
         self.laserPower = 0
+        self.art = [" "*7]*2+[" [..]  "," =-|-  ","  o^o  "]
     def Laser(self):
-        self.messages.append("uses LASER")
+        slowPrint(self.name+" uses LASER")
         if(self.laserPower==0):
-            self.messages.append("charges LASER")
+            slowPrint(self.name+" charges LASER")
             self.laserPower=1
         else:
-            self.messages.append("shoots LASER at "+self.player.name+" for "+str(self.damage*2)+"hp")
-            self.player.hurt(self.damage*2)
-            self.laserPower=0
-
-
-
-    
+            player = random.choice(Global.players)
+            slowPrint(self.name+" shoots LASER at "+player.name+" for "+str(self.damage*2)+"hp")
+            player.hurt(self.damage*2)
+            self.laserPower=0    
     def genName(self):
         nam1=["A","B","C","X","Y","Z"]
         nam2=[str(i) for i in range(10)]
@@ -304,20 +295,25 @@ class Spirit(Enemy):
         self.damageVariance=1
         self.accuracy=0.9
         self.actions=[self.Heal,self.Attack,self.Buff]
+        self.art=[" "*9]+[
+            r"  /,,\   ",
+            r"'\|^ \/' ",
+            r"   \\\   ",
+            r"   '' '  "]
     def action(self):
         if(self.stun==0):
             v = random.randint(0,len(self.actions)-1)
-            while((self.actions[v]==self.Heal and self.hp==self.maxhp) or (self.actions[v]==self.Buff and len(self.player.enemies)== 1)):
+            while((self.actions[v]==self.Heal and self.hp==self.maxhp) or (self.actions[v]==self.Buff and len(Global.enemies)== 1)):
                 v = random.randint(0,len(self.actions)-1)
             self.actions[v]()
         else:
-            self.messages.append("is stunned")
+            slowPrint(self.name+" is stunned")
             self.stun=self.stun-1
     def Buff(self):
-        for ally in self.player.enemies:
+        for ally in Global.enemies:
             if(ally != self):
                 if(self.accuracy > random.random()):
-                    self.messages.append("blesses "+ally.returnName())
+                    slowPrint(self.name+" blesses "+ally.returnName())
                     ally.maxhp = ally.maxhp+1
                     ally.damage = ally.damage+1
                     ally.hp = ally.hp+1
@@ -326,7 +322,7 @@ class Spirit(Enemy):
                         ally.type = "Blessed "+ally.type
                         ally.typeColor = "cyan"
                 else:
-                    self.messages.append("misses blessing")
+                    slowPrint(self.name+" misses blessing")
 
     def genName(self):
         nam1=["Val","Vir","Vis","Nor","Vul","Dir"]
@@ -342,6 +338,12 @@ class Roc(Bat):
         self.type="Roc"
         self.damage=3
         self.damageVariance=2
+        self.art = [
+        r"  _   ,____   ",
+        r"<'') /|\ \ \  ",
+        r"  \\/)) \ \ \ ",
+        r"  / /         ",
+        r" ^ ^          "]
     def genName(self):
         nam1=["Wing","Fly","Sky","Sly","Fur"]
         nam2=["dun","rier","con","vin"]
@@ -358,15 +360,23 @@ class Vampire(Enemy):
         self.damageVariance=1
         self.accuracy=0.8
         self.actions=[self.Heal,self.Attack,self.Drain]
+        self.art = [
+        r"      ",
+        r"\ ⟅O⟆ ",
+        r" X/|\ ",
+        r"   |  ",
+        r"  / \ ",
+        ]
     def Drain(self):
         if(self.accuracy > random.random()):
-            self.messages.append("uses drain on "+self.player.name+" for "+str(self.damage//2)+"hp")
-            self.messages.append("gains "+str(self.damage//2)+"hp")
+            player = random.choice(Global.players)
+            slowPrint(self.name+" uses drain on "+player.name+" for "+str(self.damage//2)+"hp")
+            slowPrint(self.name+" gains "+str(self.damage//2)+"hp")
 
-            self.player.hurt(self.damage//2)
+            player.hurt(self.damage//2)
             self.hp = min(self.maxhp,self.hp+self.damage//2)
         else:
-            self.messages.append("misses drain")
+            slowPrint(self.name+" misses drain")
 
     def genName(self):
         nam1=["Christopher","Rodriguez","Alexander","Abigale","Akesta","Olivia","Drakula","Abigail"]
@@ -385,12 +395,18 @@ class Summoner(Enemy):
         self.damageVariance = 1
         self.accuracy = 0.7
         self.actions = [self.Heal,self.Summon]
+        self.art=[
+        r"         ",
+        r" .O. /|  ",
+        r" /|\/ |  ",
+        r"  |/ (⸪) ",
+        r" / \     ",
+        ]
     def Summon(self):
         enemy=self.summonTarget()
-        enemy.player=self.player
         enemy.genName()
-        self.player.enemies.append(enemy)
-        self.messages.append("summons a Critter")
+        Global.enemies.append(enemy)
+        slowPrint(self.name+" summons a Critter")
     def genName(self):
         nam1=["Vale","Virium","Elmor","Goldior","Lance","Osum"]
         nam2=[" Orium"," Podem"," Lance"," Greenheart"," Mountainrise"," Evergreen"]
@@ -406,33 +422,57 @@ class Pyromancer(Enemy):
         self.damage = 4
         self.damageVariance = 2
         self.accuracy = 0.7
+        self.fireResistance=1
         self.actions = [self.Heal,self.Attack,self.Burn]
+        self.art = [
+        r"      ",
+        r"(=)   ",
+        r"/|\🔥 ",
+        r" |    ",
+        r"/ \   ",
+        ]
     def Burn(self):
-        self.messages.append("burns "+self.player.returnName()+" for "+str(self.damage//4))
+        player = random.choice(Global.players)
+        slowPrint(self.name+" burns "+player.returnName()+" for "+str(self.damage//3))
 
-        self.player.fire+=self.damage//4
+        player.fire+=self.damage//4
     def genName(self):
         nam1=["Bale","Adria","Vic","Kon","Lance","Osum"]
         nam2=[" of the Flame"," Nalaar"," Ablaze",", Flamecaller"," Ash",", Infernal Seeker"]
         name = random.choice(nam1)+random.choice(nam2)
         self.gname(name)
-#class Witch
-class Demon(Enemy):
+#class Witch(Enemy):
+#class BIgBOssBady
+
+class Demon(Pyromancer,Vampire):
     def __init__(self):
-        Enemy.__init__(self)
-        self.hp=20
+        Pyromancer.__init__(self)
+        self.hp=25
         self.maxhp=self.hp
-        self.level=8
-        self.type="Pyromancer"
-        self.damage = 4
+        self.level=15
+        self.type="Demon"
+        self.damage = 6
         self.damageVariance = 2
-        self.accuracy = 0.7
-        self.actions = [self.Heal,self.Attack,self.Burn]
+        self.accuracy = 0.8
+        self.actions = [self.Heal,self.Attack,self.Burn,self.Drain]
+        self.art = [
+        r"  , ⟅🔥⟆,  ",
+        r" /|\ | /|\ ",
+        r"🔥   |   🔥",
+        r"    / \    ",
+        r"   /   \   ",
+        ]
+
+    def genName(self):
+        nam1=["Argon","Felgar","Razaketh","Krav","Nefarex","Lucius"]
+        nam2=[", Soulhoarder",", Regent of Hell",", Devourer"," Duskseer"," Axkrand",", Tyrant of Chaos"]
+        name = random.choice(nam1)+random.choice(nam2)
+        self.gname(name)
 class Mechanum(Robotum):
     def __init__(self):
         Robotum.__init__(self)
         self.hp=20
-        self.level=15
+        self.level=12
         self.maxhp=self.hp
         self.healing=6
         self.type="Mechanum"
@@ -444,109 +484,154 @@ class Mechanum(Robotum):
     def action(self):
         if(self.stun==0):
             v = random.randint(0,len(self.actions)-1)
-            while((self.actions[v]==self.Heal and self.hp==self.maxhp) or (self.actions[v]==self.Barrier and len(self.player.enemies)== 1)):
+            while((self.actions[v]==self.Heal and self.hp==self.maxhp) or (self.actions[v]==self.Barrier and len(Global.enemies)== 1)):
                 v = random.randint(0,len(self.actions)-1)
             self.actions[v]()
         else:
-            self.messages.append("is stunned")
+            slowPrint(self.name+" is stunned")
             self.stun=self.stun-1
     def Barrier(self):
-        allies = self.player.enemies[:]
+        allies = Global.enemies[:]
         allies.remove(self)
         ally = random.choice(allies)
         ally.invinsible = 1
-        self.messages.append("shields "+ally.returnName()+" for 1 turn")
+        slowPrint(self.name+" shields "+ally.returnName()+" for 1 turn")
 
     def genName(self):
         nam1=["A","B","C","X","Y","Z"]
         nam2=[str(i) for i in range(10)]
         name = random.choice(nam1)
-        for i in range(random.randint(3,4)):
+        for i in range(random.randint(3,7)):
             name = name + random.choice(nam1+nam2)
         self.gname(name)
 
-
-#Player types
-class Warrior(Player):
+#Player races
+class Human(Player):
     def __init__(self):
         Player.__init__(self)
-        self.damage=5
-        self.damageVariance=3
-        self.hp = 13
-        self.maxhp = 13
-        self.maxAccuracy = 0.8
-        self.accuracy = self.maxAccuracy
-        self.actions = [self.Heal,self.Attack,self.Fury]
+        self.maxhp+=1
+        self.maxaccuracy+=0.05
+        self.damagestandard+=1
+
+class Flamekin(Player):
+    def __init__(self):
+        Player.__init__(self)
+        self.fireResistance+=2
+        self.fireDamage+=1
+        self.magicDamage-=1
+        self.maxhp-=1
+    def passive(self):
+        self.damage=self.damagestandard+self.fire
+
+class Elf(Player):
+    def __init__(self):
+        Player.__init__(self)
+        self.magicDamage+=1
+        self.healing+=2
+        self.hp-=2
+        
+        self.actions.append(self.Bless)
+    def Bless(self): 
+        ally=chooseTargets(Global.players,action="bless",name="player")[0]
+        if(self.accuracy > random.random()):
+            slowPrint(self.name+" blesses "+ally.returnName())
+            ally.damage = ally.damage+2
+            ally.magicDamage = ally.damage+2
+            ally.hp = min(ally.hp+2,ally.maxhp)
+            ally.accuracy = math.sqrt(ally.accuracy)
+        else:
+            slowPrint(self.name+" misses blessing")
+class Dwarf(Player):
+    def __init__(self):
+        Player.__init__(self)
+        self.damagestandard+=1
+        self.healing-=1
+        self.armorstandard+=1
+
+Global.races = [Human,Flamekin,Elf,Dwarf]
+#Player class
+class Warrior(*Global.races):
+    def __init__(self,chosenRace):
+        chosenRace.__init__(self)
+        self.damagestandard += 1
+        self.realDamage = lambda :self.damage + int(self.damage*(1-self.hp/self.maxhp))
+        self.damageVariance += 1
+        self.maxaccuracy -= 0.1
+        self.actions.append(self.Fury)
+        self.setStats()
+    def Attack(self):
+        chosenEnemy = chooseTargets(Global.enemies,name="enemy",action="attack")
+        damage = self.realDamage() + random.randint(-self.damageVariance, self.damageVariance)
+        if(self.accuracy > random.random()):
+            slowPrint(self.name+" attacks "+ chosenEnemy.returnName() + " for "+str(damage)+"hp")
+            chosenEnemy.hurt(damage)
+        else:
+            slowPrint(self.name+" misses an attack")
+
     def Fury(self):
-        self.messages.append("starts fury")
+        slowPrint(self.name+" starts fury")
         i=0
-        while(i<len(self.enemies)):
-            enemy=self.enemies[i]
-            damage = self.damage + random.randint(-self.damageVariance, self.damageVariance)
-            if(self.accuracy**len(self.enemies) > random.random()):
-                self.messages.append("attacks "+ enemy.returnName() + " for "+str(damage)+"hp")
+        while(i<len(Global.enemies)):
+            enemy=Global.enemies[i]
+            damage = self.realDamage()//2 + random.randint(-self.damageVariance, self.damageVariance)
+            if(self.accuracy**len(Global.enemies) > random.random()):
+                slowPrint(self.name+" attacks "+ enemy.returnName() + " for "+str(damage)+"hp")
                 enemy.hurt(damage)
-                if(not enemy in self.enemies):
+                if(not enemy in Global.enemies):
                     i-=1
-                self.messages.append("is hurt for 1hp")
+                slowPrint(self.name+" is hurt for 1hp")
                 self.hurt(1)
             else:
-                self.messages.append("misses an attack")
-                self.messages.append("is hurt for 1hp")
+                slowPrint(self.name+" misses an attack")
+                slowPrint(self.name+" is hurt for 1hp")
                 self.hurt(1)
             i+=1
-class Paladin(Player):
-    def __init__(self):
-        Player.__init__(self)
-        self.damage=4
-        self.damageVariance=1
-        self.hp = 16
-        self.maxhp = 16
-        self.maxAccuracy = 0.9
-        self.accuracy = self.maxAccuracy
-        self.armor = 1
-        self.armorstandard = self.armor
-        self.actions = [self.Heal,self.Attack,self.Stun]
+class Paladin(*Global.races):
+    def __init__(self,chosenRace):
+        chosenRace.__init__(self)
+        self.damageVariance -=1
+        self.maxhp += 1
+        self.armorstandard +=1
+        self.actions.append(self.Stun)
+        self.setStats()
     def Stun(self):
-        enemy = self.chooseEnemy(self.enemies)
+        enemy = chooseTargets(Global.enemies,action="stun",name="enemy")[0]
         if(self.accuracy > random.random()):
-            self.messages.append("stuns "+ enemy.returnName() + " for "+str(len(self.enemies))+" turns")
-            enemy.stun = len(self.enemies)
+            slowPrint(self.name+" stuns "+ enemy.returnName() + " for "+str(len(Global.enemies))+" turns")
+            enemy.stun = len(Global.enemies)
         else:
-            self.messages.append("misses stun")
-class Sorcerer(Player):
-    def __init__(self):
-        Player.__init__(self)
-        self.damage = 2
-        self.damageVariance = 1
-        self.hp = 16
-        self.maxhp = 16
-        self.maxAccuracy = 0.9
-        self.accuracy = self.maxAccuracy
-        self.armor = 0
-        self.armorstandard = 0
-        self.magicDamage = 4
-        self.mana = 5
-        self.maxmana = 5
-        self.managrowth = 1
-        self.fireDamage = 1
-        self.bolts = 2
-        self.regain = 1
-        self.spells = [(self.TwinFlame,3),(self.Ignite,2),(self.Bolt,2),(self.Regain,1)]
-        initialSpell = (self.TwinFlame,3) #random.choice(self.spells)
-        self.spells.remove(initialSpell)
-        self.unlockedSpells = [initialSpell]
+            slowPrint(self.name+" misses stun")
+    #def Protect(self):
+
+        #ally = chooseTargets(Global.players,action="stun",name="enemy")[0]
+class Sorcerer(*Global.races):
+    def __init__(self,chosenRace):
+        chosenRace.__init__(self)
+        self.damagestandard -= 2
+        self.damageVariance -= 1
+        self.maxhp -= 2
+        self.magicDamage += 4
+        self.maxmana += 5
+        self.managrowth += 1
+        self.fireDamage += 1
+        self.spells = [(self.TwinFlame,2),(self.Ignite,2),(self.Bolt,2),(self.Regain,0)]
+        self.unlockedSpells = []
+        for i in range(3):
+            initialSpell = random.choice(self.spells)
+            self.spells.remove(initialSpell)
+            self.unlockedSpells.append(initialSpell)
         
-        self.actions = [self.Heal,self.Attack,self.Spell]
+        self.actions.append(self.Spell)
+        self.setStats()
     def Spell(self):
         noSpellsCastable = True
         for spell in self.unlockedSpells:
             if(self.mana>=spell[1]):
                 noSpellsCastable = False
         if( noSpellsCastable == True):
-            self.messages.append("does not have enough mana to cast any spells")
+            slowPrint(self.name+" does not have enough mana to cast any spells")
             return None
-        self.reprint()
+        reprint()
         choseSpell = False
         if(len(self.unlockedSpells) == 1):
             choseSpell = True
@@ -561,58 +646,54 @@ class Sorcerer(Player):
                     choseSpell = True
                     self.mana=self.mana - self.unlockedSpells[int(chosenSpell)][1]
                 else: 
-                    self.reprint()
+                    reprint()
                     print("Not enough Mana")
                     chosenSpell = choice(self.unlockedSpells)
 
             else:
-                self.reprint()
+                reprint()
                 print("Invalid Input")
                 chosenSpell = choice(self.unlockedSpells)
         chosenSpell = self.unlockedSpells[int(chosenSpell)][0]
         chosenSpell()
     
     def TwinFlame(self):
-        enemies = self.enemies[:]
-        chosenEnemies = []
-        if(len(enemies) == 1 or len(enemies) == 2):
-            chosenEnemies = enemies
-        else:
-            chosenEnemies.append(self.chooseEnemy(enemies))
-            enemies.remove(chosenEnemies[0])
-            chosenEnemies.append(self.chooseEnemy(enemies))
+        chosenEnemies=chooseTargets(Global.enemies,name="enemy",action="burn with TwinFlame")
         i=0
         while(i<len(chosenEnemies)):
-            index = self.enemies.index(chosenEnemies[i])             
-            enemy = self.enemies[index]
+            index = Global.enemies.index(chosenEnemies[i])             
+            enemy = Global.enemies[index]
             damage = self.magicDamage
             fire = self.fireDamage
             if(self.accuracy > random.random()):
-                self.messages.append("uses TwinFlame on "+ enemy.returnName() + " for "+str(damage)+"hp and "+str(fire)+" fire")
+                slowPrint(self.name+" uses TwinFlame on "+ enemy.returnName() + " for "+str(damage)+"hp and "+str(fire)+" fire")
                 enemy.fire+=fire
                 enemy.hurt(damage)
             else:
-                self.messages.append("misses TwinFlame")
+                slowPrint(self.name+" misses TwinFlame")
             i+=1
     def Ignite(self):
-        for enemy in self.enemies:
-            if(enemy.fire>0):
-                self.messages.append("ignites "+enemy.returnName())
-                enemy.fire *= (self.fireDamage+1)
-                enemy.fire += (self.fireDamage)
-                if(self.accuracy*0.9 < random.random()):
-                     self.messages.append("accidentaly sets self on fire")
-                     self.fire += self.fireDamage
+        for enemy in Global.enemies:
+            slowPrint(self.name+" ignites "+enemy.returnName())
+            enemy.fire *= (self.fireDamage+1)
+            if(self.accuracy*0.9 < random.random()):
+                slowPrint(self.name+" accidentaly sets self on fire")
+                self.fire += self.fireDamage
     def Bolt(self):
         bolts = self.bolts+random.randint(-self.damageVariance,self.damageVariance)
-        for i in range(bolts):
-            if(self.enemies != []):
-                enemy = random.choice(self.enemies)
+        for i in range(3):
+            if(Global.enemies != []):
+                enemy = random.choice(Global.enemies)
                 if(self.accuracy > random.random()):
-                    self.messages.append("shoots bolt at "+enemy.returnName())
+                    slowPrint(self.name+" shoots bolt at "+enemy.returnName())
                     enemy.hurt(self.magicDamage)
+                else:
+                    slowPrint(self.name+" misses bolt")
     def Regain(self):
-        self.messages.append("regains health, mana, fire")
-        self.hp   = min(self.maxhp,self.hp+self.regain)
-        self.mana = min(self.maxmana,self.mana+self.regain+self.managrowth)
-        self.fire = max(0,self.fire-self.regain)
+        regain=self.magicDamage//3
+        slowPrint(self.name+" regains health, mana, fire")
+        self.hp   = min(self.maxhp,self.hp+regain)
+        self.mana = min(self.maxmana,self.mana+regain+self.managrowth)
+        self.fire = max(0,self.fire-regain)
+
+Global.classes=[Warrior,Paladin,Sorcerer]

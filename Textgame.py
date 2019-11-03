@@ -3,66 +3,56 @@ from Characters import *
 from Items import *
 from Map import *
 
-classes=[Warrior,Paladin,Sorcerer]
-
-def reprint():
-    clear()
-    drawHP(player)
-    if(isinstance(player,Sorcerer)):
-        drawHP(player,"blue",True)
-    print("")
-    for enemy in player.enemies:
-        drawHP(enemy,"red")
-    print("")
 
 #startGame()
-inp = input("name:")
-name = colored(inp,colour="blue")
-clear()
-print("Which class do you choose?")
-player = classes[int(choice(classes))]()
-player.reprint = reprint
-player.name=name
-player.nameLength = len(inp)
-print()
-slowPrint("Good Luck "+player.name,speed=3)
-progress()
-if(isinstance(player,Sorcerer)):
+def newPlayer(): 
+    inp = input("name:")
+    name = colored(inp,colour="blue")
     clear()
-    print("Unlocked "+player.unlockedSpells[0][0].__name__)
-progress()
-
+    race= chooseTargets(Global.races,name="race")[0]
+    player = chooseTargets(Global.classes,name="class")[0](race)
+    player.name=name
+    player.nameLength = len(inp)
+    Global.players.append(player)
+    print()
+    slowPrint("Good Luck "+player.name,speed=3)
+    progress()
+    #if(isinstance(player,Sorcerer)):
+     #   clear()
+      #  print("Unlocked "+player.unlockedSpells[0][0].__name__)
+       # progress()
+for i in range(int(input("Number of players:"))):
+    newPlayer()
 cheat=0
-player.enemies = attack(player,[Mechanum]*3)
+#Global.enemies = attack([Critter]*2+[Orc]+[Bat]+[Demon]+[Robotum]+[Spirit]+[Roc]+[Vampire]+[Summoner]+[Pyromancer]+[Mechanum])
 
-while True:
-    while cheat>player.level:
-        player.levelUp(cheat=True)
-        unlockEnemy(player,cheat=True)
-    while len(player.enemies)>0:
-        reprint()
-        player.invinsible=0
-        player.action()
-        for enemy in player.enemies:
+while True:    
+    for player in Global.players:
+        while cheat>player.level:
+            player.levelUp(cheat=True)
+            unlockEnemy(player,cheat=True)
+    while len(Global.enemies)>0:
+        for player in Global.players:
+            player.invinsible=0
+            if(len(Global.enemies)>0):
+                player.passive()
+                player.action()
+                player.effects()
+                progress()
+
+        for enemy in Global.enemies:
             enemy.invinsible=0
-        clear()
-        player.printMessages()
         i=0
-        while(i<len(player.enemies)):
-            enemy = player.enemies[i]
+        while(i<len(Global.enemies)):
+            enemy = Global.enemies[i]
+            enemy.passive()
             enemy.action()
             enemy.effects()
-            enemy.printMessages()
-            if(player.hp==0):
-                player.die()
-            if(not enemy in player.enemies):
+            if(not enemy in Global.enemies):
                 i-=1
-                player.printMessages()
             i+=1
-        player.effects()
-        player.printMessages()
-
         progress()
     clear()
-    player.levelUp()
-    player.enemies = Encounter(player)
+    for player in Global.players:
+        player.levelUp()
+    Global.enemies = Encounter(Global.players[0])

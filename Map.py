@@ -2,13 +2,12 @@ import random
 from Drawing import *
 from Characters import *
 
-enemyTypes = [Critter,Bat,Orc,Robotum,Roc,Vampire,Spirit,Summoner,Pyromancer,Mechanum]
+enemyTypes = [Critter,Bat,Orc,Robotum,Roc,Vampire,Spirit,Summoner,Pyromancer,Mechanum,Demon]
 unlockedEnemyTypes=[]
 def generateEnemy(player,type):
     enemy = type()
     enemy.genName()
-    enemy.player=player
-    slowPrint("Suddenly "+"a"+" wild "+enemy.type+" appear!",speed=4)
+    slowPrint("Suddenly a wild "+enemy.type+" appears!",speed=4)
     return enemy
 def unlockEnemy(player,cheat=False):
     if(len(enemyTypes)>0):
@@ -21,7 +20,7 @@ def Encounter(player):
     enemies=[]
     clear()
     enemy = generateEnemy(player,random.choice(unlockedEnemyTypes))
-    if(player.level%5==0):
+    if(player.level%6==0):
         enemy.bossify()
         slowPrint("This enemy has enhanced strength, be careful",speed=1.5)
     enemies.append(enemy)
@@ -30,12 +29,11 @@ def Encounter(player):
         enemies.append(enemy)      
     progress()    
     return enemies
-def attack(player,enemiesTypes):
+def attack(enemiesTypes):
     enemies=[]
     for enemyType in enemiesTypes:
         enemy = enemyType()
         enemy.genName()
-        enemy.player=player
         enemies.append(enemy)
     return enemies
 
@@ -55,7 +53,6 @@ def town(player):
 class Event():
     def __init__(self):
         self.level = 1
-        self.enemies = []
     def encounter(self):
         pass
     def reward(self):
