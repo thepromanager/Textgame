@@ -11,7 +11,7 @@ def newPlayer():
     clear()
     race= chooseTargets(Global.races,name="race")[0]
     player = chooseTargets(Global.classes,name="class")[0](race)
-    player.name=name
+    player.namestandard=name
     player.nameLength = len(inp)
     Global.players.append(player)
     print()
@@ -24,7 +24,7 @@ def newPlayer():
 for i in range(int(input("Number of players:"))):
     newPlayer()
 cheat=0
-#Global.enemies = attack([Critter]*2+[Orc]+[Bat]+[Demon]+[Robotum]+[Spirit]+[Roc]+[Vampire]+[Summoner]+[Pyromancer]+[Mechanum])
+#Global.enemies = attack([Witch]*3)
 
 while True:    
     for player in Global.players:
@@ -38,21 +38,23 @@ while True:
                 player.passive()
                 player.action()
                 player.effects()
-                progress()
+                if((not Global.players[-1]==player) or (len(Global.enemies)==0)):
+                    progress()
 
         for enemy in Global.enemies:
             enemy.invinsible=0
         i=0
-        while(i<len(Global.enemies)):
-            enemy = Global.enemies[i]
-            enemy.passive()
-            enemy.action()
-            enemy.effects()
-            if(not enemy in Global.enemies):
-                i-=1
-            i+=1
-        progress()
+        if(len(Global.enemies)>0):
+            while(i<len(Global.enemies)):
+                enemy = Global.enemies[i]
+                enemy.passive()
+                enemy.action()
+                enemy.effects()
+                if(not enemy in Global.enemies):
+                    i-=1
+                i+=1
+            progress()
     clear()
     for player in Global.players:
         player.levelUp()
-    Global.enemies = Encounter(Global.players[0])
+    encounter()

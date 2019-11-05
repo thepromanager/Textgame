@@ -1,3 +1,7 @@
+from Drawing import *
+from Characters import *
+from Items import *
+from Map import *
 class Attribute():
     def __init__(self,value,standardValue=None):
         self.value = value
@@ -34,9 +38,4 @@ class Attribute():
         string="""def __i{}(self,other):
         return self.__{}(other)
         """.format(iadd,iadd)
-a = Attribute(4)
-#print(a)
-#print(a//3)
-b = Attribute(8)
-a//=2
-print(max(a,17))
+    

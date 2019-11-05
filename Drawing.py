@@ -28,19 +28,19 @@ def reprint():
     print("")
 
 
-def drawHP(character,colour="green",mana=False):
+def drawHP(character,colour="green"):
     hp = character.hp
     diff = (character.maxhp-character.hp)
     filled = ucode("25A0")
     unfilled = ucode("25A1")
     name = character.returnName()
-    if(mana):
-        hp = character.mana
-        diff = (character.maxmana-character.mana)
-        filled = ucode("25CF")
-        unfilled = ucode("25CB")
-        name = character.nameLength*" "
-    print(name, colored(filled*hp+unfilled*diff,colour=colour), hp, "/", hp+diff,"🔥"*character.fire,("("+colored("stun "+str(character.stun),colour="yellow")+")")*(not not character.stun))
+    print(name, 
+        colored(filled*hp+unfilled*diff,colour=colour), 
+        hp, "/", hp+diff,
+        "🛡️ "*character.armor,
+        "🔥"*character.fire,
+        ("("+colored("stun "+str(character.stun),colour="yellow")+")")*(not not character.stun)
+        )
 
 def progress():
     input("Press Enter to continue: ")

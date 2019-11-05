@@ -2,33 +2,35 @@ import random
 from Drawing import *
 from Characters import *
 
-enemyTypes = [Critter,Bat,Orc,Robotum,Roc,Vampire,Spirit,Summoner,Pyromancer,Mechanum,Demon]
-unlockedEnemyTypes=[]
-def generateEnemy(player,type):
+Global.enemyTypes = [Critter,Bat,Faerie,Orc,Robotum,Roc,Vampire,Spirit,Summoner,Pyromaniac,Mechanum,Witch,Demon]
+Global.enemyTypes.sort(key=lambda x:(x().level))
+
+def generateEnemy(type):
     enemy = type()
     enemy.genName()
     slowPrint("Suddenly a wild "+enemy.type+" appears!",speed=4)
     return enemy
-def unlockEnemy(player,cheat=False):
-    if(len(enemyTypes)>0):
-        for enemyType in enemyTypes:
-            if(enemyType().level<=player.level):
-                if(not enemyType in unlockedEnemyTypes):
-                    unlockedEnemyTypes.append(enemyType)
-def Encounter(player):
-    unlockEnemy(player)
+def encounter():
+    level=sum([player.level for player in Global.players])
+    level = level + 5*len(Global.players)
+    levelList = [enemy().level for enemy in Global.enemyTypes]
     enemies=[]
     clear()
-    enemy = generateEnemy(player,random.choice(unlockedEnemyTypes))
-    if(player.level%6==0):
-        enemy.bossify()
-        slowPrint("This enemy has enhanced strength, be careful",speed=1.5)
-    enemies.append(enemy)
-    for i in range(player.level//5):
-        enemy = generateEnemy(player,random.choice(unlockedEnemyTypes))
-        enemies.append(enemy)      
-    progress()    
-    return enemies
+    while level>0:
+        availableEnemies = [element for element in levelList if element<=level]
+        chosenIndex = random.randint(0,len(availableEnemies)-1)
+        level-=availableEnemies[chosenIndex] 
+        enemy = generateEnemy(Global.enemyTypes[chosenIndex])
+        enemies.append(enemy)
+    
+
+    if(sum([player.level for player in Global.players])%6==0):
+        enemies[0].bossify()
+        slowPrint("One of the enemies has enhanced strength, be careful",speed=1.5)    
+    progress()
+    random.shuffle(enemies)    
+    Global.enemies = enemies
+
 def attack(enemiesTypes):
     enemies=[]
     for enemyType in enemiesTypes:
