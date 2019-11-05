@@ -2,7 +2,7 @@ import random
 from Drawing import *
 from Characters import *
 
-Global.enemyTypes = [Critter,Bat,Faerie,Orc,Robotum,Roc,Vampire,Spirit,Summoner,Pyromaniac,Mechanum,Witch,Demon]
+Global.enemyTypes = [Critter,Bat,Faerie,Orc,Robotum,Roc,Vampire,,Spirit,Summoner,Pyromaniac,Mechanum,Witch,Hydra,Demon]
 Global.enemyTypes.sort(key=lambda x:(x().level))
 
 def generateEnemy(type):

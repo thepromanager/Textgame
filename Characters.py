@@ -534,9 +534,6 @@ class Demon(Pyromaniac,Vampire):
         nam2=[", Soulhoarder",", Regent of Hell",", Devourer"," Duskseer"," Axkrand",", Tyrant of Chaos"]
         name = random.choice(nam1)+random.choice(nam2)
         self.gname(name)
-
-class Sphinx(Enemy):
-    pass
 class Witch(Enemy):
     def __init__(self):
         Enemy.__init__(self)
@@ -548,11 +545,11 @@ class Witch(Enemy):
         self.actions = [self.Heal,self.Curse]
         self.curses = ["Curse of strength","Curse of memory","Curse of protection","Curse of health",]
         self.art = [
-r"  ʌ      ",
-r" /⸪\ ()> ",
-r"\/|\/    ",
-r"/_|_\    ",
-r" / \     "]
+        r"  ʌ      ",
+        r" /⸪\ ()> ",
+        r"\/|\/    ",
+        r"/_|_\    ",
+        r" / \     "]
     def Curse(self):
         player = random.choice(Global.players)
         if(self.accuracy > random.random()):
@@ -596,18 +593,62 @@ r" / \     "]
         nam2=["do","duck","bum","sim","po","i","e"]
         name = random.choice(nam1)+random.choice(nam2)+random.choice(nam2+[""]*7)
         self.gname(name)
-
+#class
 class Hydra(Enemy):
+    def __init__(self):
+        Enemy.__init__(self)
+        self.level=9
+        self.type="Hydra"
+        self.nam=random.choice(["Kirgi","Zerk","Klow","Varge","Maxaj","Joffers","Wilkk","Xukh"])
+        self.heads=1
+        self.hp=6
+        self.damage=2
+        self.heal=2
+        self.damageVariance=1
+        self.maxhp=self.hp
+        self.accuracy = 0.65
+        self.actions = [self.Heal,self.Attack]
+        self.passives.append(self.grow)
+        self.generateArt()
+    def generateArt(self):
+        spaces=math.ceil(self.heads/2)
+        self.art=[
+        " "*spaces+
+        r"     ",
+        " "*spaces+
+        r"     ",
+        "O"*spaces+
+        r"     ",
+        (" "*(self.heads%2==1))+("O"*(self.heads//2))+
+        r"\__p ",
+        " "*spaces+
+        r" /\  ",
+        ]
+    def grow(self):
+        self.damage+=1
+        self.hp+=2
+        self.maxhp+=2
+        self.heads+=1
+        slowPrint(self.name+" grows another head")
+        self.genName()
+        self.generateArt()
+    def genName(self):
+        name = self.nam+", the "+str(self.heads)+"-headed"
+        self.gname(name)
+class Dragon(Enemy):
     pass
+
 #class BIgBOssBady
 
 #Player races
+
 class Human(Player):
     def __init__(self):
         Player.__init__(self)
         self.maxhpstandard+=1
         self.maxaccuracy+=0.05
         self.damagestandard+=1
+        self.magicDamagestandard+=1
 class Flamekin(Player):
     def __init__(self):
         Player.__init__(self)
@@ -619,7 +660,7 @@ class Flamekin(Player):
 class Elf(Player):
     def __init__(self):
         Player.__init__(self)
-        self.magicDamagestandard+=1
+        #self.magicDamagestandard+=1
         self.healing+=2
         self.maxhpstandard-=2
         
@@ -628,10 +669,10 @@ class Elf(Player):
         ally=chooseTargets(Global.players,action="bless",name="player")[0]
         if(self.accuracy > random.random()):
             slowPrint(self.name+" blesses "+ally.returnName())
-            ally.damage = ally.damage+3
-            ally.magicDamage = ally.magicDamage+3
-            ally.maxhp = ally.maxhp+3
-            ally.hp = ally.hp+3
+            ally.damage = ally.damage+2
+            ally.magicDamage = ally.magicDamage+2
+            ally.maxhp = ally.maxhp+2
+            ally.hp = ally.hp+2
             ally.accuracy = math.sqrt(ally.accuracy)
         else:
             slowPrint(self.name+" misses blessing") 
@@ -641,13 +682,17 @@ class Dwarf(Player):
         self.damagestandard+=1
         self.healing-=1
         self.armorstandard+=1
-class Vedalken(Player):
-    pass
 class Dryad(Player):
+    pass
+class Undead(Player):
     pass
 Global.races = [Human,Flamekin,Elf,Dwarf]
 
 #Player class
+class Necromancer(*Global.races):
+    pass
+class Knight(*Global.races):
+    pass
 class Beastmaster(*Global.races):
     pass
 class Nomad(*Global.races):
@@ -712,7 +757,7 @@ class Pyromancer(*Global.races):
         self.spells = [self.TwinFlame,self.Ignite,self.Bolt,self.Regain,self.Flame]
         self.unlockedSpells = []
         for i in range(2):
-            initialSpell = random.choice(self.spells)
+            initialSpell = chooseTargets(self.spells,action="unlock",name="spell")[0]#random.choice(self.spells)
             self.spells.remove(initialSpell)
             self.unlockedSpells.append(initialSpell)
         
@@ -764,8 +809,8 @@ class Pyromancer(*Global.races):
                 else:
                     slowPrint(self.name+" misses bolt")
     def Regain(self):
-        slowPrint(self.name+" regains health and fire and increases damage")
+        slowPrint(self.name+" regains "+str(self.magicDamage)+" health and fire and increases damage by "+str(self.magicDamage//2))
         self.hp   = min(self.maxhp,self.hp+self.magicDamage)
-        self.damage+=self.magicDamage/2
+        self.damage+=self.magicDamage//2
         self.fire = max(0,self.fire-self.magicDamage)
 Global.classes=[Warrior,Paladin,Pyromancer]

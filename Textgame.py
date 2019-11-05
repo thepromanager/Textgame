@@ -2,7 +2,7 @@ from Drawing import *
 from Characters import *
 from Items import *
 from Map import *
-
+normalStart=False
 
 #startGame()
 def newPlayer(): 
@@ -21,16 +21,26 @@ def newPlayer():
      #   clear()
       #  print("Unlocked "+player.unlockedSpells[0][0].__name__)
        # progress()
-for i in range(int(input("Number of players:"))):
-    newPlayer()
+if(normalStart==True):
+    for i in range(int(input("Number of players:"))):
+        newPlayer()
+else:
+    player=Pyromancer(Elf)
+    player.namestandard=colored("Noel",colour="blue")
+    player.name=colored("Noel",colour="blue")
+    player.nameLength = 4
+    #player.maxhpstandard=50
+    #player.maxhp=player.maxhpstandard
+    #player.hp=player.maxhp
+
+    Global.players.append(player)
 cheat=0
-#Global.enemies = attack([Witch]*3)
+#Global.enemies = attack([Hydra]*3)
 
 while True:    
     for player in Global.players:
         while cheat>player.level:
             player.levelUp(cheat=True)
-            unlockEnemy(player,cheat=True)
     while len(Global.enemies)>0:
         for player in Global.players:
             player.invinsible=0
