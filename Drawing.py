@@ -26,15 +26,21 @@ def reprint():
     for enemy in Global.enemies:
         drawHP(enemy,"red") 
     print("")
-
-
+def both(f,g):
+    def function():
+        f()
+        g()
+    return function
+def combine(f,g):
+    return lambda x:f(g(x))
 def drawHP(character,colour="green"):
     hp = character.hp
     diff = (character.maxhp-character.hp)
     filled = ucode("25A0")
     unfilled = ucode("25A1")
     name = character.returnName()
-    print(name, 
+    print(name,
+        "⚔️ "+str(character.realDamage(character.damage)),
         colored(filled*hp+unfilled*diff,colour=colour), 
         hp, "/", hp+diff,
         "🛡️ "*character.armor,

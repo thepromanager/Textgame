@@ -2,7 +2,7 @@ from Drawing import *
 from Characters import *
 from Items import *
 from Map import *
-normalStart=False
+normalStart=True
 
 #startGame()
 def newPlayer(): 
@@ -35,7 +35,7 @@ else:
 
     Global.players.append(player)
 cheat=0
-#Global.enemies = attack([Hydra]*3)
+#Global.enemies = Global.enemies+attack([Wolf])
 
 while True:    
     for player in Global.players:

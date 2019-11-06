@@ -2,8 +2,9 @@ import random
 from Drawing import *
 from Characters import *
 
-Global.enemyTypes = [Critter,Bat,Faerie,Orc,Robotum,Roc,Vampire,,Spirit,Summoner,Pyromaniac,Mechanum,Witch,Hydra,Demon]
+Global.enemyTypes = [Critter,Bat,Faerie,Orc,Robotum,Wolf,Roc,Vampire,Spirit,Summoner,Pyromaniac,Mechanum,Witch,Hydra,Demon]
 Global.enemyTypes.sort(key=lambda x:(x().level))
+Global.enemies=[]
 
 def generateEnemy(type):
     enemy = type()
@@ -14,6 +15,7 @@ def encounter():
     level=sum([player.level for player in Global.players])
     level = level + 5*len(Global.players)
     levelList = [enemy().level for enemy in Global.enemyTypes]
+    Global.enemies=[]
     enemies=[]
     clear()
     while level>0:
@@ -28,8 +30,8 @@ def encounter():
         enemies[0].bossify()
         slowPrint("One of the enemies has enhanced strength, be careful",speed=1.5)    
     progress()
-    random.shuffle(enemies)    
-    Global.enemies = enemies
+    random.shuffle(enemies)
+    Global.enemies = Global.enemies+enemies
 
 def attack(enemiesTypes):
     enemies=[]
