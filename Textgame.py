@@ -12,6 +12,7 @@ def newPlayer():
     race= chooseTargets(Global.races,name="race")[0]
     player = chooseTargets(Global.classes,name="class")[0](race)
     player.namestandard=name
+    player.name=name
     player.nameLength = len(inp)
     Global.players.append(player)
     print()

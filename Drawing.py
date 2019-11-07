@@ -5,7 +5,6 @@ import re
 class Global():
     enemies = []
     players = []
-
 def reprint():
     clear()
     arts=[]
@@ -20,8 +19,6 @@ def reprint():
     print("\n"*3)
     for player in Global.players:
         drawHP(player)
-        if(player.__class__.__name__=="Sorcerer"):
-            drawHP(player,"blue",True)
     print("")
     for enemy in Global.enemies:
         drawHP(enemy,"red") 
@@ -31,7 +28,8 @@ def both(f,g):
         f()
         g()
     return function
-def combine(f,g):
+def combine(f,g): 
+
     return lambda x:f(g(x))
 def drawHP(character,colour="green"):
     hp = character.hp
@@ -47,7 +45,6 @@ def drawHP(character,colour="green"):
         "🔥"*character.fire,
         ("("+colored("stun "+str(character.stun),colour="yellow")+")")*(not not character.stun)
         )
-
 def progress():
     input("Press Enter to continue: ")
     pass
@@ -99,7 +96,6 @@ def choice(actions):
                 actionName=action.__class__.__name__          
         print(colored(str(actions.index(action))+":",colour="blue"),actionName)
     return input(colored("choose: ",colour="blue"))
-
 def chooseTargets(targets,number=1,name="target",action="choose"):
     targets = targets[:]
     targetsSelected = 0

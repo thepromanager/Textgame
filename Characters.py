@@ -26,11 +26,14 @@ class Character:
         self.stun = 0
         self.fire = 0
         self.fireResistance=0
-        self.magicDamage = 0
-        self.magicDamagestandard = 0
-        self.fireDamage = 0
+        self.magicDamage = 2
+        self.magicDamagestandard = 2
+        self.fireDamage = 1
         self.passives=[]
         self.realDamage = lambda damage:damage
+        self.flying = False
+        self.holy=False
+        self.evil=False
     def hurt(self, damage):
         if(not self.invinsible):
             self.hp=max(0,self.hp-max(0,damage-self.armor))
@@ -60,7 +63,6 @@ class Player(Character):
         self.name = "player"
         self.namestandard = "player"
         self.actions = [self.Heal,self.Attack]
-        self.holy=False
     def setStats(self):
         self.maxhp=self.maxhpstandard
         self.hp=self.maxhp
@@ -132,10 +134,11 @@ class Player(Character):
 
         if(self.accuracy > random.random()):
             
-            slowPrint(self.name+" attacks "+ chosenEnemy.returnName() + " for "+str(damage)+"hp")
-            if(self.holy and chosenEnemy.evil and random.random()>0.6):
+            
+            if(self.holy and chosenEnemy.evil):
                 damage*=2
-                slowPrint("God enhances the attack")
+                slowPrint("Faithful players are super effective against evil types")
+            slowPrint(self.name+" attacks "+ chosenEnemy.returnName() + " for "+str(damage)+"hp")
             chosenEnemy.hurt(damage)
         else:
             slowPrint(self.name+" misses an attack")
@@ -147,8 +150,6 @@ class Enemy(Character):
         self.name = colored("Enemy",colour="red")
         self.actions = [self.Heal,self.Attack]
         self.art = ["??"]*5
-        self.flying = False
-        self.evil=False
     def returnName(self):
         return self.name+" ("+colored(self.type,colour=self.typeColor)+")"
     def action(self):
@@ -347,7 +348,7 @@ class Spirit(Enemy):
                     ally.damage = ally.damage+1
                     ally.hp = ally.hp+1
                     ally.accuracy = math.sqrt(ally.accuracy)
-                    if(ally.type[0:6]!="Blesse"):
+                    if(not "Blessed" in ally.type):
                         ally.type = "Blessed "+ally.type
                         ally.typeColor = "cyan"
                 else:
@@ -379,7 +380,7 @@ class Roc(Bat):
         name = random.choice(nam1)+random.choice(nam2)
         self.gname(name)
 class Wolf(Enemy):
-    def __init__(self,leader=True):
+    def __init__(self,leader=True,pack=True):
         Enemy.__init__(self)
         self.hp=4+leader*2
         self.level=6
@@ -401,10 +402,11 @@ class Wolf(Enemy):
 
         if(leader):
             self.passives.append(self.action)
-            for i in range(2):
-                wolf = Wolf(leader=False)
-                wolf.genName()
-                Global.enemies.append(wolf)
+            if(pack==True):
+                for i in range(2):
+                    wolf = Wolf(leader=False)
+                    wolf.genName()
+                    Global.enemies.append(wolf)
             self.art = [
                 r"        ",
                 r"        ",
@@ -621,10 +623,8 @@ class Witch(Enemy):
                         cursed=True
                     elif(selectedCurse=="Curse of strength" and (player.damage > 3)):
                         slowPrint(self.name+" casts Curse of strength on "+player.name)
-                        slowPrint(player.name+" loses 1 damage")
-                        print(player.damage)           
+                        slowPrint(player.name+" loses 1 damage")          
                         player.damage-=1
-                        print(player.damage)
                         cursed=True
                     elif(selectedCurse=="Curse of protection" and (player.armor > 0)):
                         slowPrint(self.name+" casts Curse of protection on "+player.name)
@@ -663,8 +663,8 @@ class Hydra(Enemy):
         self.damageVariance=1
         self.maxhp=self.hp
         self.accuracy = 0.65
-        self.actions = [self.Heal,self.Attack]
-        self.passives.append(self.grow)
+        self.actions = [self.Heal,self.Attack,self.Grow]
+        self.passives.append(self.Grow)
         self.generateArt()
     def generateArt(self):
         spaces=math.ceil(self.heads/2)
@@ -680,7 +680,7 @@ class Hydra(Enemy):
         " "*spaces+
         r" /\  ",
         ]
-    def grow(self):
+    def Grow(self):
         self.damage+=1
         self.hp+=2
         self.maxhp+=2
@@ -691,12 +691,16 @@ class Hydra(Enemy):
     def genName(self):
         name = self.nam+", the "+str(self.heads)+"-headed"
         self.gname(name)
+class Troll(Enemy):
+    pass #throws critters
 class Dragon(Bat):
     pass #DragonBreath fly attack scales
 class Progenitor(Summoner):
     pass # creates bats every turn
+class Shapeshifter(Enemy):
+    pass # morphes into random creatures at the beginning of each turn
 
-#The ThreeWarriorsOfCathune
+
 #caller of Cthulu
 
 
@@ -748,23 +752,57 @@ class Elf(Player):
             ally.accuracy = math.sqrt(ally.accuracy)
         else:
             slowPrint(self.name+" misses blessing") 
+class Fae(Player):
+    def __init__(self):
+        Player.__init__(self)
+        self.magicDamagestandard+=1
+        self.maxhpstandard-=6
+        self.flying=True
+        self.actions.append(self.Weaken)
+        self.hurt=self.evade
+    def Weaken(self):
+        enemy = chooseTargets(Global.enemies,action="weaken",name="enemy")[0]
+        if(self.accuracy > random.random()):
+
+            if(not "Weak" in enemy.type):
+                slowPrint(self.name+" weakens "+ enemy.returnName())
+                enemy.damage = int(enemy.damage*0.7)
+                weak = int(enemy.maxhp*0.35)
+                enemy.maxhp -= weak
+                enemy.hp-=weak
+                enemy.type = "Weak "+enemy.type
+                enemy.typeColor = "yellow"
+            else:
+                slowPrint(self.name+"uses weaken, "+enemy.returnName()+" is already Weak") 
+        else:
+            slowPrint(self.name+" misses weaken") 
+    def evade(self, damage):
+        if(not self.invinsible):
+            if(random.random()>0.5):
+                self.hp=max(0,self.hp-max(0,damage-self.armor))
+                if(self.hp==0):
+                    self.die()
+            else:
+                slowPrint(self.name+" evades the attack")
+        else:
+            slowPrint(self.name+" is invinsible")
 class Dwarf(Player):
     def __init__(self):
         Player.__init__(self)
-        self.damagestandard+=1
+        self.damagestandard+=2
         self.healing-=1
         self.armorstandard+=1
+        self.fireResistance+=1
 class Dryad(Player):
     pass
 class Undead(Player):
     pass
 class Robotkin(Player):
     pass # armor
-class Fae(Player):
-    pass 
 
 
-Global.races = [Human,Flamekin,Elf,Dwarf]
+
+Global.races = [Human,Flamekin,Elf,Fae,Dwarf]
 
 #Player class
 class Shaman(*Global.races):
@@ -782,8 +820,7 @@ class Nomad(*Global.races):
     def hurt(self):
         pass
         #hurt enemies when damaged, double damage against evil, Selfhurt, Share with allies 
-class Cleric(*Global.races):
-    pass #Heal all allies protect certain ally heal fungerar på vem som helst, double damage against evil
+
 class Druid(*Global.races):
     pass
 class Warrior(*Global.races):
@@ -832,14 +869,13 @@ class Paladin(*Global.races):
             enemy.stun = len(Global.enemies)
         else:
             slowPrint(self.name+" misses stun") 
-class Pyromancer(*Global.races):
+class Sorcerer(*Global.races):
     def __init__(self,chosenRace):
         chosenRace.__init__(self)
         self.damagestandard -= 2
         self.damageVariance -= 1
         self.maxhpstandard -= 2
-        self.magicDamagestandard += 3
-        self.fireDamage += 1
+        self.magicDamagestandard += 2
         self.spells = [self.TwinFlame,self.Ignite,self.Bolt,self.Regain]
         self.unlockedSpells = []
         for i in range(2):
@@ -888,6 +924,56 @@ class Pyromancer(*Global.races):
         self.hp   = min(self.maxhp,self.hp+self.magicDamage)
         self.damage+=self.magicDamage//2
         self.fire = max(0,self.fire-self.magicDamage)
+class Cleric(*Global.races):
+    def __init__(self,chosenRace):
+        chosenRace.__init__(self)
+        self.healing +=2
+        self.maxhpstandard+=1
+        self.healingVariance-=1
+        self.damagestandard-=1
+        self.holy=True
+        self.actions.append(self.Remedy)
+        self.actions.append(self.Cure)
+        self.setStats() 
+    def Heal(self):
+        ally=chooseTargets(Global.players,name="player",action="heal")[0]
+        heal = self.healing + random.randint(-self.healingVariance, self.healingVariance)
+        newhp = min(ally.maxhp,ally.hp+heal)
+        slowPrint(self.name+" healed "+ally.name+" from {}hp to {}hp".format(ally.hp, newhp))
+        ally.hp=newhp
+    def Remedy(self):
+        if(self.accuracy > random.random()):
+            healing = self.healing + random.randint(-self.healingVariance, self.healingVariance)
+            healing = int(healing*0.4)
+            message=self.name+" heals "
+            for i in range(len(Global.players)):
+                ally = Global.players[i]
+                message+=ally.returnName()+" for "+str(healing)+"hp"
+                if(i<len(Global.players)-2):
+                    message+=", "
+                if(i==len(Global.players)-2):
+                    message+=" and "
+            slowPrint(message)
+            for ally in Global.players:
+                ally.hp=min(self.maxhp,self.hp+healing)
+        else:
+            slowPrint(self.name+" misses Remedy")
+    def Cure(self):
+        ally=chooseTargets(Global.players)[0]
+        slowPrint(self.name+" cures "+ally.name)
+        if(ally.maxhp<ally.maxhpstandard):
+            diff=ally.maxhpstandard-ally.maxhp
+            ally.maxhp+=1+diff//2
+            ally.hp+=1+diff//2
+        if(ally.damage<ally.damagestandard):
+            diff=ally.ally.damagestandard-ally.damage
+            ally.damage+=1+diff//2
+        if(ally.magicDamage<ally.magicDamagestandard):
+            diff=ally.magicDamagestandard-ally.magicDamage
+            ally.magicDamage+=1+diff//2
+        if(ally.fire>0):
+            ally.fire=0
+         #Heal all allies protect certain ally heal fungerar på vem som helst, double damage against evil
 class Knight(*Global.races):
     def __init__(self,chosenRace):
         chosenRace.__init__(self)
@@ -896,8 +982,8 @@ class Knight(*Global.races):
         self.healing+=1
         self.actions.append(self.Pierce)
         self.actions.append(self.Slash)
-        self.setStats() #Pierce hurt flying enemies 3*40%  more Slash enemies next to each other
         self.holy=True
+        self.setStats() #Pierce hurt flying enemies 3*40%  more Slash enemies next to each other        
     def Pierce(self):
         enemy = chooseTargets(Global.enemies,name="enemy",action="Pierce")[0]
         if(enemy.flying):
@@ -936,4 +1022,4 @@ class Knight(*Global.races):
                 enemy.hurt(damage)
         else:
             slowPrint(self.name+" misses Slash")
-Global.classes=[Warrior,Paladin,Pyromancer,Knight]
+Global.classes=[Warrior,Paladin,Cleric,Sorcerer,Knight]
