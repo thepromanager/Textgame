@@ -38,4 +38,17 @@ class Attribute():
         string="""def __i{}(self,other):
         return self.__{}(other)
         """.format(iadd,iadd)
+
+
+
     
+
+def compose(functions):
+    def compose2(f, g):
+        return lambda x: f(g(x))
+    return functools.reduce(compose2, functions, lambda x: x)
+
+a=lambda x:x+2
+b=lambda x:x*2
+c=lambda x:x**2
+print(compose([a,c,a])(3))

@@ -1,7 +1,13 @@
 import shutil
 import time
 import re
+import random
+import functools
 
+def compose(functions):
+    def compose2(f, g):
+        return lambda x: f(g(x))
+    return functools.reduce(compose2, functions, lambda x: x)
 class Global():
     enemies = []
     players = []
@@ -28,9 +34,6 @@ def both(f,g):
         f()
         g()
     return function
-def combine(f,g): 
-
-    return lambda x:f(g(x))
 def drawHP(character,colour="green"):
     hp = character.hp
     diff = (character.maxhp-character.hp)
@@ -47,7 +50,6 @@ def drawHP(character,colour="green"):
         )
 def progress():
     input("Press Enter to continue: ")
-    pass
 def block():
     columns, rows = shutil.get_terminal_size(fallback=(80, 24))
     return ("."*columns+"\n")*(rows-1)
@@ -91,33 +93,64 @@ def choice(actions):
             actionName = action[0].__name__
         elif(not isinstance(action,str)):
             if("name" in action.__dict__):
-                actionName = action.__dict__["name"]
+                actionName = action.returnName()
             else:
                 actionName=action.__class__.__name__          
         print(colored(str(actions.index(action))+":",colour="blue"),actionName)
     return input(colored("choose: ",colour="blue"))
-def chooseTargets(targets,number=1,name="target",action="choose"):
-    targets = targets[:]
-    targetsSelected = 0
-    if(len(targets)<=number):
-        targetsSelected = number
-        chosenTargets = targets
+def chooseTargets(targets,number=1,name="target",action="choose",ai=False):
+    if(ai==False):
+        targets = targets[:]
+        targetsSelected = 0
+        if(len(targets)<=number):
+            targetsSelected = number
+            chosenTargets = targets
+        else:
+            chosenTargets=[]
+            reprint()
+            while targetsSelected < number:
+                print("Which "+name+" do you want to "+action+"?")
+                chosenTarget = choice(targets)                          
+                if(chosenTarget in [str(i) for i in range(0,len(targets))]):
+                    targetsSelected+=1
+                    chosenTargets.append(targets[int(chosenTarget)])
+                    targets.remove(targets[int(chosenTarget)])
+                    reprint()
+                else:
+                    reprint()
+                    print("Invalid Input")
+        clear()
     else:
+        targets = targets[:]
         chosenTargets=[]
-        reprint()
-        while targetsSelected < number:
-            print("Which "+name+" do you want to "+action+"?")
-            chosenTarget = choice(targets)                          
-            if(chosenTarget in [str(i) for i in range(0,len(targets))]):
-                targetsSelected+=1
-                chosenTargets.append(targets[int(chosenTarget)])
-                targets.remove(targets[int(chosenTarget)])
-                reprint()
-            else:
-                reprint()
-                print("Invalid Input")
-    clear()        
+        for i in range(number):
+            target=random.choice(targets)
+            chosenTargets.append(target)
+            targets.remove(target)
     return chosenTargets
+def binary(first="do this",second="",ai=False):
+    def draw():
+        reprint()
+        print("Do you wish to "+first+" or "*bool(second)+second+"?")
+        print(colored("0:",colour="blue"),first)
+        if(second):
+            print(colored("1:",colour="blue"),second)
+        else:
+            print(colored("1:",colour="blue"),"not "+first)
+    if(ai==False):
+        draw()
+        inp=input(colored("choose: ",colour="blue"))
+        while(inp not in ["0","1"]):
+            draw()
+            inp=input(colored("choose: ",colour="blue"))
+        return int(inp)
+    else:
+        return random.randint(0,1)
+
+
+
+
+
 def startGame():
     clear()
     changeColor(colour="blue")

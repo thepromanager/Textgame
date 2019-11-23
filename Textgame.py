@@ -14,6 +14,7 @@ def newPlayer():
     player.namestandard=name
     player.name=name
     player.nameLength = len(inp)
+    player.level=2
     Global.players.append(player)
     print()
     slowPrint("Good Luck "+player.name,speed=3)
@@ -26,7 +27,7 @@ if(normalStart==True):
     for i in range(int(input("Number of players:"))):
         newPlayer()
 else:
-    player=Pyromancer(Elf)
+    player=Sorcerer(Elf)
     player.namestandard=colored("Noel",colour="blue")
     player.name=colored("Noel",colour="blue")
     player.nameLength = 4
@@ -36,7 +37,7 @@ else:
 
     Global.players.append(player)
 cheat=0
-#Global.enemies = Global.enemies+attack([Wolf])
+#Global.enemies = Global.enemies+attack([Wolf]*2)
 
 while True:    
     for player in Global.players:
@@ -44,8 +45,10 @@ while True:
             player.levelUp(cheat=True)
     while len(Global.enemies)>0:
         for player in Global.players:
-            player.invinsible=0
+            player.invincible=0
             if(len(Global.enemies)>0):
+                #sword=Sword()
+                #sword.pickup(player)
                 player.passive()
                 player.action()
                 player.effects()
@@ -53,14 +56,15 @@ while True:
                     progress()
 
         for enemy in Global.enemies:
-            enemy.invinsible=0
+            enemy.invincible=0
         i=0
         if(len(Global.enemies)>0):
             while(i<len(Global.enemies)):
                 enemy = Global.enemies[i]
                 enemy.passive()
-                enemy.action()
-                enemy.effects()
+                if(enemy in Global.enemies):
+                    enemy.action()
+                    enemy.effects()
                 if(not enemy in Global.enemies):
                     i-=1
                 i+=1

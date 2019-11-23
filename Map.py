@@ -1,8 +1,9 @@
 import random
 from Drawing import *
 from Characters import *
+from Items import *
 
-Global.enemyTypes = [Critter,Bat,Faerie,Orc,Robotum,Wolf,Roc,Vampire,Spirit,Summoner,Pyromaniac,Mechanum,Witch,Hydra,Demon]
+Global.enemyTypes = [Critter,Bat,Faerie,Orc,Robotum,Wolf,Roc,Vampire,Spirit,Shapeshifter,Summoner,Pyromaniac,Mechanum,Witch,Hydra,Demon]
 Global.enemyTypes.sort(key=lambda x:(x().level))
 Global.enemies=[]
 
@@ -13,7 +14,7 @@ def generateEnemy(type):
     return enemy
 def encounter():
     level=sum([player.level for player in Global.players])
-    level = level + 5*len(Global.players)
+    level = level + 5*len(Global.players)+ 1.2**level#dö på 30
     levelList = [enemy().level for enemy in Global.enemyTypes]
     Global.enemies=[]
     enemies=[]
@@ -54,10 +55,11 @@ def town(player):
     # Adventure
     # time
     # Money
+
 class Event():
     def __init__(self):
         self.level = 1
     def encounter(self):
         pass
     def reward(self):
-        pass
+        pass 
